@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <stdexcept>
@@ -103,12 +104,12 @@ LOG_TRACE
     }
     
 private:
-    void error(const std::string& error_name, const std::string& param = "") const {
+    void error(const std::string& error_name, const std::string& param = "", const std::string& param2 = "") const {
         
         if (param.empty())
             printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s\n", __FILE__, current_number_line_, posintion_, error_name.c_str());
         else if (!param.empty()){
-            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str());
+            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\', \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str(), param2.c_str());
         }
         throw std::logic_error("");
     }
@@ -116,14 +117,14 @@ private:
     void print_all()const noexcept {
         std::cout << "Count vars: " << Ops.size() << '\n';
         std::for_each(Ops.begin(), Ops.end(), [](const auto& el){
-            std::visit([&el](auto&& arg){std::cout << el.first << " = " << arg << '\n';},el.second);
+            std::visit([&el](auto&& val){std::cout << el.first << " = " << val << '\n';},el.second);
             //std::cout << el.first << " = " << std::el.second << '\n'; 
         });
     }
 
     void print_var(const std::string& var_name) const {
-        std::visit([&var_name](auto&& arg){
-            std::cout << var_name << " = " << arg << '\n';
+        std::visit([&var_name](auto&& val){
+            std::cout << var_name << " = " << val << '\n';
         }, get_value(var_name));
         //std::cout << var_name << " = " << get_value(var_name) << '\n';
     }
@@ -192,11 +193,11 @@ LOG_TRACE
         else {
             if (current_symbol_ == '-'){
                 get_next_token();
-                x = std::visit([](auto&& arg) -> type_t{ return -arg;}, ProcM());//-ProcM();
+                x = std::visit([](auto&& val) -> type_t{ return -val;}, ProcM());//-ProcM();
             }
             else if (current_symbol_ == '!'){
                 get_next_token();
-                x =  std::visit([](auto&& arg) -> type_t{ return !static_cast<bool>(arg);}, ProcM());
+                x =  std::visit([](auto&& val) -> type_t{ return !static_cast<bool>(val);}, ProcM());
             }
             else{
                 if (current_symbol_ >= '0' && current_symbol_ <= '9'){
@@ -232,7 +233,7 @@ LOG_TRACE
                 x = ProcE();
                 s = funcs.back();
                 funcs.pop_back();
-                x = std::visit([](auto&& arg) -> type_t {return std::sqrt(arg);}, x);
+                x = std::visit([](auto&& val) -> type_t {return std::sqrt(val);}, x);
                 get_next_token();
             }
             else{
@@ -251,13 +252,12 @@ LOG_TRACE
                 get_next_token();
                 get_next_token();
                 funcs.push_back(s);
-                //get_next_token();
                 x = ProcE();
                 s = funcs.back();
                 funcs.pop_back();
-                if (s == "sin") x = std::visit([](auto&& arg) -> type_t {return std::sin(arg);}, x);
-                else if (s == "cos") x = std::visit([](auto&& arg) -> type_t {return std::cos(arg);}, x);
-                else x = std::visit([](auto&& arg) -> type_t {return arg * arg;}, x);
+                if (s == "sin") x = std::visit([](auto&& val) -> type_t {return std::sin(val);}, x);
+                else if (s == "cos") x = std::visit([](auto&& val) -> type_t {return std::cos(val);}, x);
+                else x = std::visit([](auto&& val) -> type_t {return val * val;}, x);
                 get_next_token();
             }
             else{
@@ -278,9 +278,9 @@ LOG_TRACE
             char op = current_symbol_;
             get_next_token();
             if (op == '*')
-                x = std::visit([](auto&& arg1, auto&& arg2) -> type_t {return arg1 * arg2;}, x, ProcF());//x * ProcF();
+                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs * rhs;}, x, ProcF());//x * ProcF();
             else
-                x = std::visit([](auto&& arg1, auto&& arg2) -> type_t {return arg1 / arg2;}, x, ProcF());//x / ProcF();
+                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs / rhs;}, x, ProcF());//x / ProcF();
         }
         
         return x;
@@ -292,9 +292,9 @@ LOG_TRACE
             char op = current_symbol_;
             get_next_token();
             if (op == '+')
-                x = std::visit([](auto&& arg1, auto&& arg2) -> type_t {return arg1 + arg2;}, x, ProcT());//x + ProcT();
+                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs + rhs;}, x, ProcT());//x + ProcT();
             else
-                x = std::visit([](auto&& arg1, auto&& arg2) -> type_t {return arg1 - arg2;}, x, ProcT());//x - ProcT();
+                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs - rhs;}, x, ProcT());//x - ProcT();
         }
         
         return x;
@@ -313,7 +313,7 @@ LOG_TRACE
             else{
                 if (current_symbol_ == '=' && op == '='){
                     get_next_token();
-                    x = std::visit([](auto&& arg1, auto&& arg2) -> type_t {return (std::fabs(arg1 - arg2) < 1e-9);}, x, ProcF());//x == ProcF();
+                    x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return (std::fabs(lhs - rhs) < 1e-9);}, x, ProcF());//x == ProcF();
                     //x = (fabs(x - ProcK()) < 1e-9);
                 }
                 else
@@ -327,35 +327,37 @@ LOG_TRACE
     type_t ProcE(){
         type_t x = ProcY();
         type_t y;
-        if (x.index() == 1)
-            error("Invalid operands to binary expression with 'double'");
         while(current_symbol_ == '|' || current_symbol_ == '&'){
             char op = current_symbol_;
             get_next_token();
+
             if (op == '|'){
                 y = ProcY();
-                if (y.index() == 1)
+                if (x.index() == 0 && y.index() == 1)
                     error("Invalid operands to binary expression ('int' and 'double')");
-                x = std::get<int>(x) | std::get<int>(y);
+                else if (x.index() == 1 && y.index() == 0)
+                    error("Invalid operands to binary expression ('doube' and 'int')");
+                else if (x.index() == 1 && y.index() == 1)
+                    error("Invalid operands to binary expression ('double' and 'double')");
+                else
+                    x = std::get<int>(x) | std::get<int>(y);
                 }
             else if (op == '&'){
                 y = ProcY();
-                if (y.index() == 1)
+                if (x.index() == 0 && y.index() == 1)
                     error("Invalid operands to binary expression ('int' and 'double')");
-                x = std::get<int>(x) & std::get<int>(y);
+                else if (x.index() == 1 && y.index() == 0)
+                    error("Invalid operands to binary expression ('doube' and 'int')");
+                else if (x.index() == 1 && y.index() == 1)
+                    error("Invalid operands to binary expression ('double' and 'double')");
+                else
+                    x = std::get<int>(x) & std::get<int>(y);
                 }
-            
             else{
-                // if (current_symbol_ == '=' && op == '='){
-                //     get_next_token();
-                //     x = std::visit([](auto&& arg1, auto&& arg2) -> type_t {return (std::fabs(arg1 - arg2) < 1e-9);}, x, ProcF());//x == ProcF();
-                //     //x = (fabs(x - ProcK()) < 1e-9);
-                // }
-                //else
                     error("Is not assingable");
             }
         }
-            return x;
+        return x;
     }
 
     std::string ProcIL(){
@@ -380,7 +382,7 @@ LOG_TRACE
         
         get_next_token();
     
-        type_t right = ProcY();
+        type_t right = ProcE();
         
         if (current_symbol_ != ';')
             error("Missing", ";");
@@ -421,8 +423,7 @@ LOG_TRACE
     //Parser Parser("a=sin(sin(sin(sin(sin(sin(2))))));");
     //Parser Parser("f=2;z=2;b=-((f-z)*10);");
     //Parser Parser("z=214748364;f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
-    Parser Parser("a=2.4;b=3.2;c=a|b;");
+    Parser Parser("a=2.4;b=3.2;c = a|b;");
     Parser.Parse();
-    std::cout << (2 | 3);
     return 0;
 }
