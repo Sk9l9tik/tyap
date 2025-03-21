@@ -12,12 +12,13 @@
 #include <cmath>
 #include <variant>
 
+
 #define DEBUG
 #undef DEBUG
 
 #include "Log.hh"
 
-// S → I=Y;
+// S → I=E;
 // E → E'|'Y|E&Y|Y
 // Y → Y<K|Y>K|Y==K|K
 // K → K+T|K-T|T 
@@ -42,10 +43,9 @@ std::vector<std::pair<std::string, type_t>> Ops;
 std::vector<std::string> funcs;
 
 //TODO: Add error line and error symbol v
-class Parser {
-
+class Parser {    
 public:
-    Parser(const std::string& input) : input_(input), input_size_(input.size()), posintion_(0), current_number_line_(0), current_line_("") {}
+    Parser(const std::string& input) : input_(input), input_size_(input.size()), posintion_(0), current_number_line_(0) {}
 
     Parser(std::istream& input) : input_size_(0), posintion_(0), current_number_line_(0) {
         std::string line;
@@ -66,18 +66,22 @@ LOG_TRACE
         
         size_t i = 0;
 
+        std::cout << "START PARSE\n";
+
         get_next_token();
-        while(posintion_ < input_size_){
+        
+        while(posintion_ <= input_size_ && current_symbol_ != ' '){
+
             if (current_symbol_ == '\n')
                 ++current_number_line_;
-            while (current_symbol_ >= 0 && current_symbol_ <= ' ')
+            while(current_symbol_ >= 0 && current_symbol_ <= ' ')
                 get_next_token();
+            
             if (current_symbol_ == EOF)
                 return;
             
             std::string var;
             try{
-                std::cout << "START PARSE\n";
                 var = ProcS();
             }
             catch(const std::logic_error& e){
@@ -105,11 +109,13 @@ LOG_TRACE
     
 private:
     void error(const std::string& error_name, const std::string& param = "", const std::string& param2 = "") const {
-        
         if (param.empty())
             printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s\n", __FILE__, current_number_line_, posintion_, error_name.c_str());
         else if (!param.empty()){
-            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\', \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str(), param2.c_str());
+            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str());
+        }
+        else if (!param.empty() && !param2.empty()){
+            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\' \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str(), param2.c_str());
         }
         throw std::logic_error("");
     }
@@ -153,7 +159,7 @@ LOG_TRACE
     type_t ProcC(){
 LOG_TRACE
         type_t x;
-        double xf = 0;
+        int xf = 0;
         double xl = 0;
         while((current_symbol_ >= '0' && current_symbol_ <= '9')){
             xf *= 10;
@@ -247,10 +253,7 @@ LOG_TRACE
                 s += input_[posintion_ + i];
 
             if (s == "sin" || s == "cos" || s == "sqr"){
-                get_next_token();
-                get_next_token();
-                get_next_token();
-                get_next_token();
+                for(int i = 0; i < 4; ++i) get_next_token();
                 funcs.push_back(s);
                 x = ProcE();
                 s = funcs.back();
@@ -313,7 +316,7 @@ LOG_TRACE
             else{
                 if (current_symbol_ == '=' && op == '='){
                     get_next_token();
-                    x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return (std::fabs(lhs - rhs) < 1e-9);}, x, ProcF());//x == ProcF();
+                    x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return (std::fabs(lhs - rhs) < 1e-9);}, x, ProcK());//x == ProcF();
                     //x = (fabs(x - ProcK()) < 1e-9);
                 }
                 else
@@ -326,11 +329,11 @@ LOG_TRACE
 
     type_t ProcE(){
         type_t x = ProcY();
-        type_t y;
         while(current_symbol_ == '|' || current_symbol_ == '&'){
+            type_t y;
             char op = current_symbol_;
             get_next_token();
-
+            //May be re write errors detach
             if (op == '|'){
                 y = ProcY();
                 if (x.index() == 0 && y.index() == 1)
@@ -398,10 +401,12 @@ LOG_TRACE
             while(input_[posintion_] > 0 && input_[posintion_] <= ' ') // ignore spaces
                 ++posintion_;
             current_symbol_ = input_[posintion_++];
-            current_line_ += std::to_string(current_symbol_ - '0');
             #ifdef DEBUG
-            std::cout << current_symbol_ << '\n';
+            std::cout << current_symbol_  << ' ' << posintion_ << '\n';
             #endif
+        }
+        else {
+            current_symbol_ = ' ';
         }
     }
 
@@ -410,8 +415,9 @@ LOG_TRACE
     size_t posintion_;
     char current_symbol_;
     size_t current_number_line_;
-    std::string current_line_;
+    const std::string file_;
 };
+
 
 int main(){
 LOG_TRACE 
@@ -420,10 +426,10 @@ LOG_TRACE
     //Parser Parser("cc=191+2147483647/65536*(-5*-5+40000000000000000000000000);");
     //Parser Parser("a=-(2147483647-214748364*10);");
     //Parser Parser("a=sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(2))))));");
-    //Parser Parser("a=sin(sin(sin(sin(sin(sin(2))))));");
+    //Parser Parser("a=sin(sin(sin(sin(sin(sin(2 | (5 + 1)))))));");
     //Parser Parser("f=2;z=2;b=-((f-z)*10);");
-    //Parser Parser("z=214748364;f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
-    Parser Parser("a=2.4;b=3.2;c = a|b;");
+    Parser Parser("z=214748364;f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
+    //Parser Parser("a=;");
     Parser.Parse();
     return 0;
 }
