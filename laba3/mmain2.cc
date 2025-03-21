@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -36,7 +37,7 @@
 #define IS_IDENT_FIRST_SYMBOL(x) (((x) >= 'a' && (x) <= 'z') || (x) == '_')
 #define IS_IDENT(x) (((x) >= 'a' && (x) <= 'z') || (x) == '_' || ((x) >= '0' && (x) <= '9'))
 
-using type_t = std::variant<int, double>;
+using type_t = std::variant<int32_t, double>;
 
 std::unordered_map<std::string, type_t> VarTable;
 std::vector<std::pair<std::string, type_t>> Ops;
@@ -91,7 +92,7 @@ LOG_TRACE
             std::cout << "Operator " << i++ << ": ";
             
             const auto it = std::find_if(Ops.begin(), Ops.end(), 
-            [&var](std::pair<std::string, std::variant<int, double>> el){return el.first == var;});
+            [&var](std::pair<std::string, type_t> el){return el.first == var;});
             if (it == Ops.end())
                 Ops.emplace_back(var, get_value(var));
             else {
@@ -159,7 +160,7 @@ LOG_TRACE
     type_t ProcC(){
 LOG_TRACE
         type_t x;
-        int xf = 0;
+        int32_t xf = 0;
         double xl = 0;
         while((current_symbol_ >= '0' && current_symbol_ <= '9')){
             xf *= 10;
@@ -177,7 +178,7 @@ LOG_TRACE
             xl /= l;
         }
         if (xl == 0){
-            x = static_cast<int>(xf);
+            x = xf;
             return x;
         }
         else{
@@ -343,7 +344,7 @@ LOG_TRACE
                 else if (x.index() == 1 && y.index() == 1)
                     error("Invalid operands to binary expression ('double' and 'double')");
                 else
-                    x = std::get<int>(x) | std::get<int>(y);
+                    x = std::get<0>(x) | std::get<0>(y);
                 }
             else if (op == '&'){
                 y = ProcY();
@@ -354,7 +355,7 @@ LOG_TRACE
                 else if (x.index() == 1 && y.index() == 1)
                     error("Invalid operands to binary expression ('double' and 'double')");
                 else
-                    x = std::get<int>(x) & std::get<int>(y);
+                    x = std::get<0>(x) & std::get<0>(y);
                 }
             else{
                     error("Is not assingable");
