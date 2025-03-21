@@ -1,0 +1,107 @@
+12345677	 int
+1234	 int
+123u	 unsigned int
+123l	 long int
+123ll	 long long int
+123ull	 unsigned long int
+123llu	 unsigned long int
+123x	 ERROR
+123lll	 ERROR
+123lul	 ERROR
+1234	 int
+1234l	 long int
+1233	 int
+123l	 long int
+123uu	 ERROR
+123luu	 ERROR
+1234	 int
+1234	 int
+1234uu	 ERROR
+1234luu	 ERROR
+1234	 int
+1234u	 unsigned int
+1234	 int
+0x1234	 int
+0x123u	 unsigned int
+0x1234l	 long int
+0x44444l	 long int
+0x123ll	 long long int
+0x123ull	 unsigned long int
+0x123llu	 unsigned long int
+0x123x	 ERROR
+0x123lll	 ERROR
+0x123lul	 ERROR
+0x1234	 int
+0x1234l	 long int
+0x1233	 int
+0x123l	 long int
+0x123uu	 ERROR
+0x123luu	 ERROR
+0x1234	 int
+0x1234	 int
+0x1234uu	 ERROR
+0x1234luu	 ERROR
+0x1234	 int
+0x1234u	 unsigned int
+0x1234	 int
+0x12AF	 int
+0x23ac	 int
+0x	 Error
+0xffll	 long long int
+0xaful	 unsigned long int
+01234	 int
+0123u	 unsigned int
+0123l	 long int
+0123ll	 long long int
+0123ull	 unsigned long int
+0123llu	 unsigned long int
+0123x	 ERROR
+0123lll	 ERROR
+0123lul	 ERROR
+01234	 int
+01234l	 long int
+01233	 int
+0123l	 long int
+0123uu	 ERROR
+0123luu	 ERROR
+01234	 int
+1234	 int
+01234uu	 ERROR
+01234luu	 ERROR
+01234	 int
+01234u	 unsigned int
+01234	 int
+01275	 int
+0128	 ERROR
+00000023	 int
+00000	 int
+0123l	 long int
+01234u	 unsigned int
+01234ll	 long long int
+0b111	 int
+0b100u	 unsigned int
+0b100l	 long int
+0b110ll	 long long int
+0b111ull	 unsigned long int
+0b111llu	 unsigned long int
+0b111x	 ERROR
+0b111lll	 ERROR
+0b111lu	 unsigned long int
+0b011	 int
+0b11l	 long int
+0b1000	 int
+0b001l	 long int
+0b101uu	 ERROR
+0b101luu	 ERROR
+0b1	 int
+0x11	 int
+0b1uu	 ERROR
+0b111luu	 ERROR
+0b11	 int
+0b100u	 unsigned int
+0b011	 int
+0b	 Error
+0b1015	 ERROR
+0b01112	 ERROR
+0b01112	 ERROR
+0b01112	 ERROR
