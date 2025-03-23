@@ -1,0 +1,8 @@
+a = sin(2);
+b=cos(3);
+c = sqr(6);
+m = sqrt(2);
+
+k = sin(sin(2));
+
+t = sin(cos(sqr(sqrt(66))));

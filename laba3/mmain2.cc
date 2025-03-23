@@ -40,11 +40,12 @@ std::vector<std::pair<std::string, type_t>> Ops;
 std::vector<std::string> funcs;
 
 //TODO: Add error line and error symbol v
-class Parser {    
+class Parser {   
 public:
     Parser(const std::string& input) : input_(input), input_size_(input.size()), posintion_(0), current_number_line_(0), file_(0) {}
 
-    Parser(const std::string_view& input_file, const std::string_view& output_file) : file_(1), posintion_(0), current_number_line_(0) {
+    Parser(const std::string_view& input_file, const std::string_view& output_file) : file_(1), posintion_(0), current_number_line_(0), file_name_(input_file) {
+        
         input_file_.open(input_file.data());
         output_file_.open(output_file.data());
 
@@ -125,13 +126,14 @@ private:
     void error(const std::string& error_name, const std::string& param = "", const std::string& param2 = "") {
         if (file_){
             if (param.empty())
-                output_file_ << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << "\n";
+                output_file_ << file_name_ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << "\n";
             else if (!param.empty()){
-                output_file_ << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n";
+                output_file_ << file_name_ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n";
             }
             else if (!param.empty() && !param2.empty()){
-                output_file_ << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n" << " '" << param2 << "'\n";
+                output_file_ << file_name_ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n" << " '" << param2 << "'\n";
             }
+            output_file_ << "END PARSE\n";
         }
         else{
             if (param.empty())
@@ -143,6 +145,7 @@ private:
                 std::cout << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n" << " '" << param2 << "'\n";
             }
         }
+        std::cout << "END PARSE\n";
         throw std::logic_error("");
     }
 
@@ -324,9 +327,9 @@ LOG_TRACE
             char op = current_symbol_;
             get_next_token();
             if (op == '*')
-                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs * rhs;}, x, ProcF());//x * ProcF();
+                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs * rhs;}, x, ProcF()); //x * ProcF();
             else
-                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs / rhs;}, x, ProcF());//x / ProcF();
+                x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs / static_cast<double>(rhs);}, x, ProcF()); //x / ProcF();
         }
         
         return x;
@@ -456,6 +459,7 @@ LOG_TRACE
     std::string input_;
     std::ifstream input_file_;
     std::ofstream output_file_;
+    std::string file_name_;
 
     size_t input_size_;
     size_t posintion_;
@@ -465,12 +469,15 @@ LOG_TRACE
 };
 
 
-int main(){
+int main(int argc, char** argv){
 LOG_TRACE 
-    Parser Parser("in.txt", "out.txt");
 
+    if (argc != 3) {std::cerr << "Error input!\n"; return 3;}
+
+    Parser Parser(argv[1], argv[2]);
+    
+    //Parser Parser("./tests/br-expr.txt", "out.txt");
     //Parser Parser("c=5;c=10;c=c+2;");
-    //cc=c+f/65536*(d*d+b)
     //Parser Parser("cc=191+2147483647/65536*(-5*-5+40000000000000000000000000);");
     //Parser Parser("a=-(2147483647-214748364*10);");
     //Parser Parser("a=sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(2))))));");
