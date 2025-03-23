@@ -1,13 +1,9 @@
 #include <algorithm>
-#include <cctype>
-#include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <cmath>
@@ -46,12 +42,17 @@ std::vector<std::string> funcs;
 //TODO: Add error line and error symbol v
 class Parser {    
 public:
-    Parser(const std::string& input) : input_(input), input_size_(input.size()), posintion_(0), current_number_line_(0) {}
+    Parser(const std::string& input) : input_(input), input_size_(input.size()), posintion_(0), current_number_line_(0), file_(0) {}
 
-    Parser(std::istream& input) : input_size_(0), posintion_(0), current_number_line_(0) {
-        std::string line;
-        while (std::getline(input, line)) {
-            input_ += line + '\n';
+    Parser(const std::string_view& input_file, const std::string_view& output_file) : file_(1), posintion_(0), current_number_line_(0) {
+        input_file_.open(input_file.data());
+        output_file_.open(output_file.data());
+
+        if (!input_file_.is_open()) { throw std::runtime_error("Can't open in file!\n"); }
+        else if (!output_file_.is_open()) { throw std::runtime_error("Can't open out file!\n"); }
+        std::string s;
+        while(std::getline(input_file_, s)){
+            input_ += s + '\n';
         }
         input_size_ = input_.size();
     }
@@ -60,19 +61,24 @@ public:
     Parser(Parser& other) = delete;
     Parser(Parser&& other) = delete;
     
-    ~Parser() = default;
+    ~Parser(){
+        input_file_.close();
+        output_file_.close();
+    }
 
     void Parse(){
 LOG_TRACE        
-        
         size_t i = 0;
+
+        if (file_)
+            output_file_ << "START PARSE\n";
 
         std::cout << "START PARSE\n";
 
-        get_next_token();
-        
-        while(posintion_ <= input_size_ && current_symbol_ != ' '){
 
+        get_next_token();
+
+        while(posintion_ <= input_size_ && current_symbol_ != ' '){
             if (current_symbol_ == '\n')
                 ++current_number_line_;
             while(current_symbol_ >= 0 && current_symbol_ <= ' ')
@@ -89,8 +95,11 @@ LOG_TRACE
                 return;
             }
 
-            std::cout << "Operator " << i++ << ": ";
-            
+            if (!file_)
+                std::cout << "Operator " << i++ << ": ";
+            else
+                output_file_ << "Operator " << i++ << ": ";
+
             const auto it = std::find_if(Ops.begin(), Ops.end(), 
             [&var](std::pair<std::string, type_t> el){return el.first == var;});
             if (it == Ops.end())
@@ -102,41 +111,74 @@ LOG_TRACE
             print_var(var);
             get_next_token();
         }
-        
-        std::cout << "END PARSE\n";
-        print_all();
-        
+        if (file_){
+            output_file_ << "END PARSE\n";
+            print_all();
+        }
+        else{
+            print_all();
+        }
+        std::cout << "END PARSE\n ";
     }
     
 private:
-    void error(const std::string& error_name, const std::string& param = "", const std::string& param2 = "") const {
-        if (param.empty())
-            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s\n", __FILE__, current_number_line_, posintion_, error_name.c_str());
-        else if (!param.empty()){
-            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str());
+    void error(const std::string& error_name, const std::string& param = "", const std::string& param2 = "") {
+        if (file_){
+            if (param.empty())
+                output_file_ << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << "\n";
+            else if (!param.empty()){
+                output_file_ << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n";
+            }
+            else if (!param.empty() && !param2.empty()){
+                output_file_ << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n" << " '" << param2 << "'\n";
+            }
         }
-        else if (!param.empty() && !param2.empty()){
-            printf("%s:%ld:%ld: \e[1;31merror:\e[0m %s \'%s\' \'%s\'\n", __FILE__, current_number_line_, posintion_, error_name.c_str(), param.c_str(), param2.c_str());
+        else{
+            if (param.empty())
+                std::cout << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << "\n";
+            else if (!param.empty()){
+                std::cout << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n";
+            }
+            else if (!param.empty() && !param2.empty()){
+                std::cout << __FILE__ << ":" << current_number_line_ << ":" << posintion_ << ": \e[1;31merror:\e[0m " << error_name << " '"<< param << "'\n" << " '" << param2 << "'\n";
+            }
         }
         throw std::logic_error("");
     }
 
-    void print_all()const noexcept {
-        std::cout << "Count vars: " << Ops.size() << '\n';
-        std::for_each(Ops.begin(), Ops.end(), [](const auto& el){
-            std::visit([&el](auto&& val){std::cout << el.first << " = " << val << '\n';},el.second);
-            //std::cout << el.first << " = " << std::el.second << '\n'; 
-        });
+    void print_all() {
+        if (file_){
+            auto& out{output_file_};
+            out << "Count vars: " << Ops.size() << '\n';
+
+            std::for_each(Ops.begin(), Ops.end(), [&out](const auto& el){
+                std::visit([&el, &out](auto&& val){out << el.first << " = " << val << '\n';},el.second);
+            });
+        }
+        else{
+            std::cout << "Count vars: " << Ops.size() << '\n';
+            std::for_each(Ops.begin(), Ops.end(), [](const auto& el){
+                std::visit([&el](auto&& val){std::cout << el.first << " = " << val << '\n';},el.second);
+            });
+        }
     }
 
-    void print_var(const std::string& var_name) const {
-        std::visit([&var_name](auto&& val){
+    void print_var(const std::string& var_name) {
+        if (file_){
+            auto& out{output_file_};
+            std::visit([&var_name, &out](auto&& val){
+            out << var_name << " = " << val << '\n';
+        }, get_value(var_name));
+        }
+        else{
+            std::visit([&var_name](auto&& val){
             std::cout << var_name << " = " << val << '\n';
         }, get_value(var_name));
-        //std::cout << var_name << " = " << get_value(var_name) << '\n';
+        }
     }
+    
 
-    type_t get_value(const std::string& var_name) const {
+    type_t get_value(const std::string& var_name) {
         if (VarTable.find(var_name) != VarTable.end()){
             return VarTable[var_name];
         }
@@ -412,16 +454,21 @@ LOG_TRACE
     }
 
     std::string input_;
+    std::ifstream input_file_;
+    std::ofstream output_file_;
+
     size_t input_size_;
     size_t posintion_;
     char current_symbol_;
     size_t current_number_line_;
-    const std::string file_;
+    const bool file_;
 };
 
 
 int main(){
 LOG_TRACE 
+    Parser Parser("in.txt", "out.txt");
+
     //Parser Parser("c=5;c=10;c=c+2;");
     //cc=c+f/65536*(d*d+b)
     //Parser Parser("cc=191+2147483647/65536*(-5*-5+40000000000000000000000000);");
@@ -429,8 +476,8 @@ LOG_TRACE
     //Parser Parser("a=sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(2))))));");
     //Parser Parser("a=sin(sin(sin(sin(sin(sin(2 | (5 + 1)))))));");
     //Parser Parser("f=2;z=2;b=-((f-z)*10);");
-    Parser Parser("z=214748364;f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
-    //Parser Parser("a=;");
+    //Parser Parser("z=214748364f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
+    //Parser Parser("a=12");
     Parser.Parse();
     return 0;
 }

@@ -1,0 +1,9 @@
+START PARSE
+Operator 0: a = 3
+Operator 1: b = 2
+Operator 2: c = 5
+END PARSE
+Count vars: 3
+a = 3
+b = 2
+c = 5
