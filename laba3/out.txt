@@ -1,11 +1,5 @@
 START PARSE
-Operator 0: a = 2
-Operator 1: b = 3
-Operator 2: c = 23
-Operator 3: d = 47
+Operator 0: a = 1.41421
 END PARSE
-Count vars: 4
-a = 2
-b = 3
-c = 23
-d = 47
+Count vars: 1
+a = 1.41421

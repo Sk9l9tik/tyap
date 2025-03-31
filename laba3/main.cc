@@ -285,7 +285,7 @@ LOG_TRACE
     }
 
     std::string ProcIL(){
-LOG_TRACE //TODO: Сделать проверку на зарезервированные ключевые слова: sin, ....
+LOG_TRACE //TODO: Сделать проверку на зарезервированные ключевые слова: sin, .... v
         std::string var;
         if (!IS_IDENT_FIRST_SYMBOL(current_symbol_))
             error("Expression is not assignable", std::to_string(current_symbol_ - '0'));
@@ -346,7 +346,7 @@ LOG_TRACE
     //Parser Parser("a=sin(sin(sin(sin(sin(sin(2))))));");
     //Parser Parser("f=2;z=2;b=-((f-z)*10);");
     //Parser Parser("z=214748364;f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
-    Parser Parser("a=2;\n2=2;");
+    Parser Parser("a=2;\nb=2;");
     Parser.Parse();
     return 0;
 }

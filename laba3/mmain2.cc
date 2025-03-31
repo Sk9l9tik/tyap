@@ -9,7 +9,6 @@
 #include <cmath>
 #include <variant>
 
-
 #define DEBUG
 #undef DEBUG
 
@@ -77,7 +76,7 @@ LOG_TRACE
         std::cout << "START PARSE\n";
 
 
-        get_next_token();
+        get_next_token_del();
 
         while(posintion_ <= input_size_ && current_symbol_ != ' '){
             if (current_symbol_ == '\n')
@@ -110,7 +109,7 @@ LOG_TRACE
             }
 
             print_var(var);
-            get_next_token();
+            get_next_token_del();
         }
         if (file_){
             output_file_ << "END PARSE\n";
@@ -222,6 +221,9 @@ LOG_TRACE
             }
             xl /= l;
         }
+        if (current_symbol_ > 0 && current_symbol_ <= ' ')
+            get_next_token_del();
+
         if (xl == 0){
             x = xf;
             return x;
@@ -230,25 +232,26 @@ LOG_TRACE
             x = static_cast<double>(xf + xl);
             return x;
         }
+
     }
 
     type_t ProcM(){
 LOG_TRACE
         type_t x;
         if (current_symbol_ == '('){
-            get_next_token();
+            get_next_token_del();
             x = ProcE();
             if (current_symbol_ != ')')
                 error("Missing", ")");
-            get_next_token();
+            get_next_token_del();
         }
         else {
             if (current_symbol_ == '-'){
-                get_next_token();
+                get_next_token_del();
                 x = std::visit([](auto&& val) -> type_t{ return -val;}, ProcM());//-ProcM();
             }
             else if (current_symbol_ == '!'){
-                get_next_token();
+                get_next_token_del();
                 x =  std::visit([](auto&& val) -> type_t{ return !static_cast<bool>(val);}, ProcM());
             }
             else{
@@ -277,16 +280,25 @@ LOG_TRACE
             s = ""; 
             for(int i = 0; i <= 3; ++i){
                 s+= current_symbol_;
-                get_next_token();
+                get_next_token_del();
             }
             if (s == "sqrt"){
                 funcs.push_back(s);
-                get_next_token();
-                x = ProcE();
+                if (current_symbol_ == '('){
+                    get_next_token_del();
+                    
+                    x = ProcE();
+                }
+                else {
+                    error("Syntax error, missing: ", "(");
+                }
+                if (current_symbol_  != ')'){
+                    error("Syntax error, missing: ", ")");
+                }
                 s = funcs.back();
                 funcs.pop_back();
                 x = std::visit([](auto&& val) -> type_t {return std::sqrt(val);}, x);
-                get_next_token();
+                get_next_token_del();
             }
             else{
                 x = ProcM();
@@ -299,15 +311,26 @@ LOG_TRACE
                 s += input_[posintion_ + i];
 
             if (s == "sin" || s == "cos" || s == "sqr"){
-                for(int i = 0; i < 4; ++i) get_next_token();
+                for(int i = 0; i < 3; ++i) get_next_token();
                 funcs.push_back(s);
-                x = ProcE();
+
+                if (current_symbol_ == '('){
+                    get_next_token();
+                    x = ProcE();
+                }
+                else {
+                    error("Syntax error, missing: ", "(", std::to_string(current_symbol_));
+                }
+                if (current_symbol_  != ')'){
+                    error("Syntax error, missing: ", ")");
+                }
+
                 s = funcs.back();
                 funcs.pop_back();
                 if (s == "sin") x = std::visit([](auto&& val) -> type_t {return std::sin(val);}, x);
                 else if (s == "cos") x = std::visit([](auto&& val) -> type_t {return std::cos(val);}, x);
                 else x = std::visit([](auto&& val) -> type_t {return val * val;}, x);
-                get_next_token();
+                get_next_token_del();
             }
             else{
                 x = ProcM();
@@ -325,7 +348,7 @@ LOG_TRACE
         type_t x = ProcF();
         while(current_symbol_ == '*' || current_symbol_ == '/'){
             char op = current_symbol_;
-            get_next_token();
+            get_next_token_del();
             if (op == '*')
                 x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs * rhs;}, x, ProcF()); //x * ProcF();
             else
@@ -339,7 +362,7 @@ LOG_TRACE
         type_t x = ProcT();
         while(current_symbol_ == '+' || current_symbol_ == '-'){
             char op = current_symbol_;
-            get_next_token();
+            get_next_token_del();
             if (op == '+')
                 x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return lhs + rhs;}, x, ProcT());//x + ProcT();
             else
@@ -352,6 +375,7 @@ LOG_TRACE
     type_t ProcY(){
 LOG_TRACE
         type_t x = ProcK();
+        std::cout << current_symbol_;
         while(current_symbol_ == '<' || current_symbol_ == '>' || (current_symbol_ == '=')){
             char op = current_symbol_;
             get_next_token();
@@ -360,8 +384,8 @@ LOG_TRACE
             else if (op == '>')
                 x = x > ProcK();
             else{
-                if (current_symbol_ == '=' && op == '='){
-                    get_next_token();
+                if (current_symbol_ == '='){
+                    get_next_token_del();
                     x = std::visit([](auto&& lhs, auto&& rhs) -> type_t {return (std::fabs(lhs - rhs) < 1e-9);}, x, ProcK());//x == ProcF();
                     //x = (fabs(x - ProcK()) < 1e-9);
                 }
@@ -378,7 +402,7 @@ LOG_TRACE
         while(current_symbol_ == '|' || current_symbol_ == '&'){
             type_t y;
             char op = current_symbol_;
-            get_next_token();
+            get_next_token_del();
             //May be re write errors detach
             if (op == '|'){
                 y = ProcY();
@@ -420,6 +444,9 @@ LOG_TRACE //TODO: Сделать проверку на зарезервиров�
         }
         if (var == "sin" || var == "cos" || var == "sqr" || var == "sqrt")
             error("Expected unqualified-id");
+
+        if (current_symbol_ > 0 && current_symbol_ <= ' ')
+            get_next_token();
         return var;
     }
     
@@ -429,7 +456,7 @@ LOG_TRACE
         if (current_symbol_ != '=')
             error("Missing", "=");
         
-        get_next_token();
+        get_next_token_del();
     
         type_t right = ProcE();
         
@@ -444,8 +471,6 @@ LOG_TRACE
     void get_next_token(){
 LOG_TRACE
         if (posintion_ < input_size_) {
-            while(input_[posintion_] > 0 && input_[posintion_] <= ' ') // ignore spaces
-                ++posintion_;
             current_symbol_ = input_[posintion_++];
             #ifdef DEBUG
             std::cout << current_symbol_  << ' ' << posintion_ << '\n';
@@ -456,6 +481,21 @@ LOG_TRACE
         }
     }
 
+    void get_next_token_del(){
+        LOG_TRACE
+                if (posintion_ < input_size_) {
+                    while(input_[posintion_] > 0 && input_[posintion_] <= ' ') // ignore spaces
+                        ++posintion_;
+                    current_symbol_ = input_[posintion_++];
+                    #ifdef DEBUG
+                    std::cout << current_symbol_  << ' ' << posintion_ << '\n';
+                    #endif
+                }
+                else {
+                    current_symbol_ = ' ';
+                }
+            }
+        
     std::string input_;
     std::ifstream input_file_;
     std::ofstream output_file_;
@@ -483,8 +523,8 @@ LOG_TRACE
     //Parser Parser("a=sqrt(sqrt(sqrt(sqrt(sqrt(sqrt(2))))));");
     //Parser Parser("a=sin(sin(sin(sin(sin(sin(2 | (5 + 1)))))));");
     //Parser Parser("f=2;z=2;b=-((f-z)*10);");
-    //Parser Parser("z=214748364f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
-    //Parser Parser("a=12");
+    //Parser Parser("z=214748364;f=2147483647;b=1; c=2;d=c*-2;z=81/9/3;b=-(f-z*10);c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;c=c+1;cc=c+f/65536*(d*d+b);abc=cc/100;f=cc-100*abc;z=-z;c=c-c;");
+    //Parser Parser("a=sin;");
     Parser.Parse();
     return 0;
 }
