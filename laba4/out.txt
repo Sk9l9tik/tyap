@@ -1,0 +1,5 @@
+START PARSE
+Operator 0: a = 1.41421
+END PARSE
+Count vars: 1
+a = 1.41421
