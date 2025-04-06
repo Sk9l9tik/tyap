@@ -1,5 +1,6 @@
 START PARSE
-Operator 0: a = 1.41421
+1: V(a,null)
+2: C(2,null)
+3: sqrt(^2,null)
+4: =(^1,^3)
 END PARSE
-Count vars: 1
-a = 1.41421
