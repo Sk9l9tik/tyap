@@ -274,11 +274,11 @@ LOG_TRACE
             get_next_token();
             if (op == '*'){
                 int rx = ProcF();
-                return print_triade("*", "^" + std::to_string(lx), "^" + std::to_string(rx));
+                lx = print_triade("*", "^" + std::to_string(lx), "^" + std::to_string(rx));
             }
             else{
                 int rx = ProcF();
-                return print_triade("/", "^" + std::to_string(lx), "^" + std::to_string(rx));
+                lx = print_triade("/", "^" + std::to_string(lx), "^" + std::to_string(rx));
             }
         }
         

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 set(project_name laba3)
 project(${project_name})
 
-set(SOURCES "main.cc")
+set(SOURCES "mmain.cc")
 
 set(HEADERS "Log.hh")
 

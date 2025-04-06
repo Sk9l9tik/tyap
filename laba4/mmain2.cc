@@ -221,12 +221,12 @@ LOG_TRACE
             }
             xl /= l;
         }
-        if (current_symbol_ > 0 && current_symbol_ <= ' ')
-            get_next_token_del();
+
 
         if (xl == 0){
             x = xf;
-            return x;
+            return x;        if (current_symbol_ > 0 && current_symbol_ <= ' ')
+            get_next_token_del();
         }
         else{
             x = static_cast<double>(xf + xl);
