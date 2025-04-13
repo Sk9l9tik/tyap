@@ -1,4 +1,4 @@
-PROJECT_NAME = laba3
+PROJECT_NAME = laba4
 NPROCS ?= $(shell nproc)
 
 .PHONY:build
@@ -8,7 +8,7 @@ build:
 
 .PHONY:start
 start:
-	./build/laba3
+	./build/laba4
 
 
 .PHONY:clear

@@ -67,7 +67,7 @@ public:
 
     void Parse(){
         LOG_TRACE        
-                size_t i = 0;
+                // size_t i = 0;
         
                 if (file_)
                     output_file_ << "START PARSE\n";
