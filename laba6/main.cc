@@ -1,8 +1,5 @@
 #include <iostream>
 #include <ostream>
-#include <vector>
-#include <array>
-#include <unordered_map>
 
 
 bool is_ident(char x) { return ((x <= 'z' && x >= 'a') || (x >= 'a' && x <= 'z') || (x == '_') || (x >= '0' && x <= '9')); }

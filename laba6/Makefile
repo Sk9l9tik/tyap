@@ -8,7 +8,7 @@ build:
 
 .PHONY:start
 start:
-	./build/laba4
+	./build/${PROJECT_NAME}
 
 
 .PHONY:clear
