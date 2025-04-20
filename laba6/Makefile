@@ -1,5 +1,7 @@
 PROJECT_NAME = laba6
 NPROCS ?= $(shell nproc)
+INPUT = in
+OUTPUT = out
 
 .PHONY:build
 build:
@@ -8,7 +10,7 @@ build:
 
 .PHONY:start
 start:
-	./build/${PROJECT_NAME}
+	./build/${PROJECT_NAME} ${INPUT} ${OUTPUT}
 
 
 .PHONY:clear
