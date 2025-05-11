@@ -4,11 +4,11 @@ NPROCS ?= $(shell nproc)
 .PHONY:build
 build:
 	cmake -B build .
-	cmake --build build -j $(NPROCS)
+	cmake --build build -j $(NPROCS) 
 
 .PHONY:start
 start:
-	./build/laba4
+	./build/laba5 in.txt out.txt
 
 
 .PHONY:clear
