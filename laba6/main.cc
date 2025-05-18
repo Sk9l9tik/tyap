@@ -84,7 +84,6 @@ class Parser{
         prev_symbol_ = current_symbol_;
         if (input_file_ >> std::noskipws >> current_symbol_){
             while(current_symbol_ > 0 && current_symbol_ <= ' ') input_file_ >> std::noskipws >> current_symbol_;
-            std::cout << "------EOF------\n";
             if (!is_alf(current_symbol_)){ 
                 error("Symbol is not in alphabet: " + std::string(1, current_symbol_) + "\n");
             }
@@ -94,8 +93,10 @@ class Parser{
             }
             else ++posintion_;
         }
-        else
+        else {
+            current_symbol_ = EOF;
             return;
+        }
     }
  
     token_type get_const() {
@@ -354,8 +355,9 @@ class Parser{
                     s.pop();
                 }
                 std::cout << "\n";
-                // if (i == 0)
-                //     error("Unknown rule: " + rule);
+                if (i == 0) {
+                    error("Unknown rule: " + rule);
+                }
                 sym_stack_.push(rules[i].second);
                 --i;
                 continue;
