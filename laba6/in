@@ -1,8 +1,7 @@
-a = sin(2);
-b = cos(3);
-c = sqr(6);
-m = sqrt(2);
+a = 2;
 
-k = sin(sin(2));
+b = 3;
 
-t = sin(cos(sqr(sqrt(66.233))));
+c = (2 + 3) * 5 - 2;
+
+d = (c-2) + ((((c + 3))));
