@@ -41,13 +41,15 @@ struct symbol_t{
     symbol_t(std::string type_, char relation_, int number_, std::string value_) : type(type_), relation(relation_), number(number_), value(value_) {}
 };
  
-using type_t = std::variant<int32_t, double>; ///< var can be int or double
+// using type_t = std::variant<int32_t, double>; ///< var can be int or double
+using type_t = double;
 std::unordered_map<std::string, type_t> sym_table;
 std::vector<triade_t> triades; 
  
 std::string to_string(type_t x){
-    if (x.index() == 0) return std::to_string(std::get<0>(x));
-    else return std::to_string(std::get<1>(x));
+    // if (x.index() == 0) return std::to_string(std::get<0>(x));
+    // else return std::to_string(std::get<1>(x));
+    return std::to_string(x);
 }
  
 class Parser{
@@ -67,6 +69,8 @@ class Parser{
     void get(){
         prev_symbol_ = current_symbol_;
         if (input_file_ >> std::noskipws >> current_symbol_){
+            if(current_symbol_ == EOF)
+                std::cout << "------EOF------\n";
             if (!is_alf(current_symbol_)){ error("Symbol is not in alpahbet!\n");}
             else if (current_symbol_ == '\n') {
                 ++current_number_line_;
@@ -80,7 +84,7 @@ class Parser{
         prev_symbol_ = current_symbol_;
         if (input_file_ >> std::noskipws >> current_symbol_){
             while(current_symbol_ > 0 && current_symbol_ <= ' ') input_file_ >> std::noskipws >> current_symbol_;
- 
+            std::cout << "------EOF------\n";
             if (!is_alf(current_symbol_)){ 
                 error("Symbol is not in alphabet: " + std::string(1, current_symbol_) + "\n");
             }
@@ -171,34 +175,36 @@ class Parser{
  
     char get_relations(symbol_t a, symbol_t b){
         const char relations[14][14] = {
-            //#	   L	S	 I	  =	   E	;	 +	  -	   F	(	 )	  G	   C 
-            {'0', '<', '0', '<', '0', '0', '0', '0', '0', '0', '0', '0', '0', '<'},
-            {'=', '0', '<', '<', '0', '0', '>', '0', '0', '0', '0', '>', '0', '<'},
-            {'>', '0', '0', '0', '0', '0', '>', '0', '0', '0', '0', '>', '0', '0'},
-            {'0', '0', '0', '0', '=', '0', '>', '>', '>', '0', '0', '>', '0', '0'},
-            {'0', '0', '0', '0', '0', '<', '0', '<', '<', '<', '<', '0', '<', '<'},
-            {'0', '0', '0', '0', '0', '0', '=', '=', '=', '0', '0', '>', '0', '0'},
-            {'>', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'},
-            {'0', '0', '0', '0', '0', '<', '0', '>', '>', '<', '<', '>', '<', '<'},
-            {'0', '0', '0', '0', '0', '<', '0', '>', '>', '<', '<', '>', '<', '<'},
-            {'0', '0', '0', '0', '0', '0', '>', '>', '>', '0', '0', '>', '0', '0'},
-            {'0', '0', '0', '0', '0', '<', '0', '<', '<', '<', '<', '=', '<', '<'},
-            {'0', '0', '0', '0', '0', '0', '>', '>', '>', '0', '0', '>', '0', '0'},
-            {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '<', '0', '0', '0'},
-            {'0', '0', '0', '0', '0', '0', '>', '>', '>', '0', '0', '>', '0', '0'}
+            //        #	       L        S	     I	      =	       E	    ;	     +	      -	       F    (	 )	  G	   C 
+            {'0', '=', '<', '<', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'},//#
+            {'=', '0', '=', '<', '0', '0', '>', '0', '0', '0', '0', '0', '0', '0'},//L
+            {'>', '0', '0', '>', '0', '0', '>', '0', '0', '0', '0', '>', '0', '0'},//S
+            {'0', '0', '0', '0', '=', '0', '>', '>', '>', '0', '0', '>', '0', '0'},//I
+            {'0', '0', '0', '0', '0', '%', '0', '<', '<', '<', '<', '0', '<', '<'},//=
+            {'0', '0', '0', '0', '0', '0', '=', '=', '=', '0', '0', '=', '0', '0'},//E
+            {'>', '0', '0', '>', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'},//;
+            {'0', '0', '0', '<', '0', '<', '0', '0', '0', '%', '<', '0', '<', '<'},//+
+            {'0', '0', '0', '<', '0', '<', '0', '0', '0', '%', '<', '0', '<', '<'},//-
+            {'0', '0', '0', '0', '0', '0', '>', '>', '>', '0', '0', '>', '0', '0'},//F
+            {'0', '0', '0', '<', '0', '%', '0', '<', '<', '<', '<', '0', '<', '<'},//(
+            {'0', '0', '0', '0', '0', '0', '>', '>', '>', '0', '0', '>', '0', '0'},//)
+            {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '=', '0', '0', '0'},//G
+            {'0', '0', '0', '0', '0', '0', '>', '>', '>', '0', '0', '>', '0', '0'}//C
         };
 
+        
         char res;
         int x = index(a.type);
         int y = index(b.type);
-
+        
         if (x < 0 || y < 0) {
             res = 0;
         }
         else {
             res = relations[x][y];
         }
-
+        
+        std::cout << "--Rel:" << a.type << ' ' << b.type << ' ' << res << '\n';
         return (!res) ? '0' : res; 
     }
  
@@ -240,7 +246,7 @@ class Parser{
             }
             res.value = "0";
             get_del();
- 
+            
         }
         return res;
     }
@@ -250,11 +256,18 @@ class Parser{
     }   
  
     void reduce() {
+
+        //TODO: Дописать внешний цикл, который будет укорачивать основу и и проверять совпадений:
+        // Например: 
+        // #I=E+F;
+        // < = <= = <= >
+        ////             
+        std::vector<std::pair<std::string, symbol_t>> rules;
         std::string rule = "";
         symbol_t bufferI, bufferC, bufferE, bufferF, bufferS, bufferL, bufferG;
         symbol_t new_symbol;
 
-        while (sym_stack_.top().relation == '=') {
+        while (sym_stack_.top().relation == '=' || sym_stack_.top().relation == '%') {
             rule = sym_stack_.top().type + rule;
             if (sym_stack_.top().type == "I") bufferI = sym_stack_.top();
             if (sym_stack_.top().type == "C") bufferC = sym_stack_.top();
@@ -263,6 +276,7 @@ class Parser{
             if (sym_stack_.top().type == "S") bufferS = sym_stack_.top();
             if (sym_stack_.top().type == "L") bufferL = sym_stack_.top();
             if (sym_stack_.top().type == "G") bufferG = sym_stack_.top();
+            rules.emplace_back(rule, sym_stack_.top());
             sym_stack_.pop();
         }
         rule = sym_stack_.top().type + rule;
@@ -273,69 +287,80 @@ class Parser{
         if (sym_stack_.top().type == "S") bufferS = sym_stack_.top();
         if (sym_stack_.top().type == "L") bufferL = sym_stack_.top();
         if (sym_stack_.top().type == "G") bufferG = sym_stack_.top();
+        rules.emplace_back(rule, sym_stack_.top());
         sym_stack_.pop();
 
-        if (rule == "I" || rule == "C") {
-            new_symbol.type = "F";
-            if (rule == "I") {
-                if (sym_table.find(bufferI.value) != sym_table.end()) {
-                    new_symbol.value = bufferI.value;
-                    new_symbol.number = bufferI.number;
+        std::cout << "R: " << rule << '\n';
+        for(size_t i = rules.size()-1; i >= 0;){
+            rule = rules[i].first;
+            std::cout << "RULE:" << rule << '\n';
+            if (rule == "I" || rule == "C") {
+                new_symbol.type = "F";
+                if (rule == "I") {
+                    if (sym_table.find(bufferI.value) != sym_table.end()) {
+                        new_symbol.value = bufferI.value;
+                        new_symbol.number = bufferI.number;
+                    } else {
+                        triades.pop_back();
+                        error("Undefined variable: " + bufferI.value);
+                    }
                 } else {
-                    triades.pop_back();
-                    error("Undefined variable: " + bufferI.value);
+                    new_symbol.value = bufferC.value;
+                    new_symbol.number = bufferC.number;
                 }
+            } else if (rule == "I=E;") {
+                new_symbol.type = "S";
+                new_symbol.number = triade_count++;
+                if (sym_table.find(bufferI.value) == sym_table.end()) {
+                    sym_table[bufferI.value] = 0;
+                }
+                triades.emplace_back("=", 
+                                   "^" + std::to_string(bufferI.number),
+                                   "^" + std::to_string(bufferE.number));
+            } else if (rule == "E+F") {
+                new_symbol.type = "E";
+                new_symbol.number = triade_count++;
+                triades.emplace_back("+",
+                                   "^" + std::to_string(bufferE.number),
+                                   "^" + std::to_string(bufferF.number));
+            } else if (rule == "E-F") {
+                new_symbol.type = "E";
+                new_symbol.number = triade_count++;
+                triades.emplace_back("-",
+                                   "^" + std::to_string(bufferE.number),
+                                   "^" + std::to_string(bufferF.number));
+            } else if (rule == "(E)") {
+                new_symbol.type = "F";
+                new_symbol.number = bufferE.number;
+            } else if (rule == "G(E)") {
+                new_symbol.type = "F";
+                new_symbol.number = triade_count++;
+                triades.emplace_back(bufferG.value,
+                                   "^" + std::to_string(bufferE.number),
+                                   "0");
+            } else if (rule == "S") {
+                new_symbol.type = "L";
+                new_symbol.number = bufferS.number;
+            } else if (rule == "LS") {
+                new_symbol.type = "L";
+                new_symbol.number = bufferL.number;
+            } else if (rule == "F") {
+                new_symbol.type = "E";
+                new_symbol.number = bufferF.number;
             } else {
-                new_symbol.value = bufferC.value;
-                new_symbol.number = bufferC.number;
+                auto s = sym_stack_;
+                while(!s.empty()){
+                    std::cout << s.top().type << " ";
+                    s.pop();
+                }
+                std::cout << "\n";
+                // if (i == 0)
+                //     error("Unknown rule: " + rule);
+                sym_stack_.push(rules[i].second);
+                --i;
+                continue;
             }
-        } else if (rule == "I=E;") {
-            new_symbol.type = "S";
-            new_symbol.number = triade_count++;
-            if (sym_table.find(bufferI.value) == sym_table.end()) {
-                sym_table[bufferI.value] = 0;
-            }
-            triades.emplace_back("=", 
-                               "^" + std::to_string(bufferI.number),
-                               "^" + std::to_string(bufferE.number));
-        } else if (rule == "E+F") {
-            new_symbol.type = "E";
-            new_symbol.number = triade_count++;
-            triades.emplace_back("+",
-                               "^" + std::to_string(bufferE.number),
-                               "^" + std::to_string(bufferF.number));
-        } else if (rule == "E-F") {
-            new_symbol.type = "E";
-            new_symbol.number = triade_count++;
-            triades.emplace_back("-",
-                               "^" + std::to_string(bufferE.number),
-                               "^" + std::to_string(bufferF.number));
-        } else if (rule == "(E)") {
-            new_symbol.type = "F";
-            new_symbol.number = bufferE.number;
-        } else if (rule == "G(E)") {
-            new_symbol.type = "F";
-            new_symbol.number = triade_count++;
-            triades.emplace_back(bufferG.value,
-                               "^" + std::to_string(bufferE.number),
-                               "0");
-        } else if (rule == "-F") {
-            new_symbol.type = "F";
-            new_symbol.number = triade_count++;
-            triades.emplace_back("-",
-                               "^" + std::to_string(bufferF.number),
-                               "0");
-        } else if (rule == "S") {
-            new_symbol.type = "L";
-            new_symbol.number = bufferS.number;
-        } else if (rule == "LS") {
-            new_symbol.type = "L";
-            new_symbol.number = bufferL.number;
-        } else if (rule == "F") {
-            new_symbol.type = "E";
-            new_symbol.number = bufferF.number;
-        } else {
-            error("Unknown rule: " + rule);
+            break;
         }
 
         new_symbol.relation = get_relations(sym_stack_.top(), new_symbol);
@@ -384,7 +409,7 @@ public:
 
         new_symbol = get_smbol();
         while(true){
-            if (new_symbol.type == "#" || sym_stack_.top().type == "L"){
+            if (new_symbol.type == "#" && sym_stack_.top().type == "L"){
                 std::cout << "End parse\n";
                 break;
             }
@@ -400,8 +425,11 @@ public:
                 std::cout << "\n";
 
                 if(current_symbol_ == ' ') get_del();
+                // else get();
 
                 new_symbol = get_smbol();
+
+                std::cout << "Next symbol: " << new_symbol.type << '\n';
             }
             else if (new_symbol.relation == '>'){
                 reduce();
@@ -417,7 +445,7 @@ public:
                 break;
             }
         }
-
+        //#I=E;I
         print_tiades();
     }
  
