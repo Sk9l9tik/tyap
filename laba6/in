@@ -5,4 +5,4 @@ m = sqrt(2);
 
 k = sin(sin(2));
 
-t = sin(cos(sqr(sqrt(66))));
+t = sin(cos(sqr(sqrt(66.233))));
