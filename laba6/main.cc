@@ -257,12 +257,6 @@ class Parser{
     }   
  
     void reduce() {
-
-        //TODO: Дописать внешний цикл, который будет укорачивать основу и и проверять совпадений:
-        // Например: 
-        // #I=E+F;
-        // < = <= = <= >
-        ////             
         std::vector<std::pair<std::string, symbol_t>> rules;
         std::string rule = "";
         symbol_t bufferI, bufferC, bufferE, bufferF, bufferS, bufferL, bufferG;
